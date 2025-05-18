@@ -122,15 +122,35 @@ class MainViewModel: ViewModel() {
             val allFiles = mutableListOf<File>()
             fun scanDir(dir: File) {
                 dir.listFiles()?.forEach { file ->
-                    val matchesMask = _textMask.value.isEmpty() ||
-                            file.name.matches(FileUtils.wildcardToRegex(_textMask.value))
-                    val include = when {
-                        file.isDirectory -> _checkedIncludeDirs.value
-                        else -> _checkedIncludeFiles.value
-                    }
-                    if (include && matchesMask) {
-                        allFiles.add(file)
-                        if (file.isDirectory) scanDir(file)
+                    try {
+                        // Проверка маски
+                        val matchesMask = _textMask.value.isEmpty() ||
+                                file.name.matches(_textMask.value.toRegexFromWildcard())
+
+                        // Проверка типа (файл/директория)
+                        val include = when {
+                            file.isDirectory -> _checkedIncludeDirs.value
+                            else -> _checkedIncludeFiles.value
+                        }
+
+                        // Проверка содержимого (если запрос не пуст)
+                        val contentCondition = if (!isQueryBlank && file.isFile) {
+                            try {
+                                file.readText().contains(query, ignoreCase = true)
+                            } catch (e: Exception) {
+                                false
+                            }
+                        } else true
+
+                        if (include || matchesMask || contentCondition) {
+                            allFiles.add(file)
+                            println("✅ Added: ${file.name}")
+                            if (file.isDirectory) scanDir(file)
+                        } else {
+                            println("❌ Skipped: ${file.name}")
+                        }
+                    } catch (e: Exception) {
+                        println("Error: ${file.absolutePath} - ${e.message}")
                     }
                 }
             }

@@ -35,6 +35,9 @@ fun App() {
     val checkedIncludeDirs by viewModel.checkedIncludeDirs.collectAsState()
     val checkedIncludeFiles by viewModel.checkedIncludeFiles.collectAsState()
     val resultSearch by viewModel.resultSearch.collectAsState()
+    val durationMs by viewModel.searchDurationMs.collectAsState()
+    val precision by viewModel.precision.collectAsState()
+    val recall by viewModel.recall.collectAsState()
 
     MaterialTheme {
         Column(
@@ -72,8 +75,12 @@ fun App() {
                 Text("Search")
             }
 
+            Text(text = "Найдено ${resultSearch.size} результатов")
+            Text(text = "Время выполнения: $durationMs мс")
+            Text(text = "Precision: ${(precision * 100).format(2)}%")
+            Text(text = "Recall: ${(recall * 100).format(2)}%")
+
             Column {
-                Text(text = "Найдено ${resultSearch.size} результатов")
                 resultSearch.forEach { result ->
                     println("result: $result")
                     UICard(path = result.path, isDirectory = result.isDirectory)
@@ -82,6 +89,10 @@ fun App() {
         }
     }
 }
+
+
+fun Double.format(digits: Int) = "%.${digits}f".format(this)
+
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication) {
